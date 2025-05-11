@@ -1,6 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import '../src/TunerNeedle.css'; // Make sure this is imported globally
-import AudioRecorder from './pages/AudioRecorder';
+import RealTimeRecorder from './pages/RealTimeRecorder';
+import { io } from 'socket.io-client';
+
+// 🔧 Test Socket.IO connection
+function PingTest() {
+  useEffect(() => {
+    const socket = io('http://localhost:5000');
+
+    socket.on('connect', () => {
+      console.log('🔌 Connected, sending ping...');
+      socket.emit('ping', { message: 'Hello from frontend' });
+    });
+
+    socket.on('pong', (data) => {
+      console.log('🎯 Received from server:', data.message);
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  return null;
+}
 
 function App() {
   return (
@@ -14,7 +35,8 @@ function App() {
       padding: '2vw',
       boxSizing: 'border-box'
     }}>
-      <AudioRecorder />
+      <RealTimeRecorder />
+      <PingTest />
     </div>
   );
 }
