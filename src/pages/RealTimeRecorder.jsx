@@ -18,9 +18,14 @@ export default function RealTimeRecorder() {
   const mediaRecorderRef = useRef(null);
 
   const socketRef = useSocket((data) => {
+    console.log(data);
+
+    if (data.note === "No note detected") return;
+
     const formatted = `${data.note} (${data.frequency} Hz)`;
     setNote(formatted);
-    setNoteHistory((prev) => [...prev.slice(-19), formatted]); // keep last 20
+    setNoteHistory((prev) => [...prev.slice(-19), formatted]);
+
   });
 
   const startRecording = async () => {
@@ -29,19 +34,19 @@ export default function RealTimeRecorder() {
     mediaRecorderRef.current = mediaRecorder;
 
     mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0 && socketRef.current?.readyState === WebSocket.OPEN) {
+      if (event.data.size > 0 && socketRef.current?.connected) {
         const reader = new FileReader();
         reader.onloadend = () => {
           const arrayBuffer = reader.result;
-          const payload = ['audio_chunk', new Uint8Array(arrayBuffer)];
-          const message = `42${JSON.stringify(payload)}`;
-          socketRef.current.send(message);
+          const uint8 = new Uint8Array(arrayBuffer);
+          socketRef.current.emit('audio_chunk', uint8);
         };
         reader.readAsArrayBuffer(event.data);
+
       }
     };
 
-    mediaRecorder.start(300);
+    mediaRecorder.start(2000);
     setRecording(true);
   };
 
